@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Turing's machine</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/snap.svg-min.js"></script>
+    <script src="js/jquery-3.3.1.min.js"></script>
+  </head>
+
+  <body>
+
+    <!-- <div class="bg-eclipse"> -->
+
+      <div class="machine_data">
+        <div class="center">
+          <div class="states_input">
+            <div class="add_new_state">
+              <div class="attr_column">
+                  <div class="attr_item">State name</div>
+                  <div class="attr_item">Read</div>
+                  <div class="attr_item">Write</div>
+                  <div class="attr_item">Move to</div>
+                  <div class="attr_item">Next state</div>
+              </div>
+              <div class="attr_column">
+                  <div class="attr_item">
+                    <input type="text" id="v_state_name" />
+                  </div>
+                  <div class="attr_item">
+                    <input type="text" id="v_read" />
+                  </div>
+                  <div class="attr_item">
+                    <input type="text" id="v_write" />
+                  </div>
+                  <div class="attr_item">
+                      <select name="move_select"                        
+                              id="states_select">
+                        <option value="R">Right</option>
+                        <option value="L">Left</option>
+                      </select>  
+                  </div>
+                  <div class="attr_item">
+                      <input type="text" id="v_next_state" />
+                  </div>
+              </div>
+              <div class="attr_column btn_div">
+                <div class="add_btn"> ADD <br>new state</div>
+              </div>
+            </div>
+          </div>
+          <div class="string_input">
+            <div class="text">
+              <input type="text" id="process_string" />
+            </div>
+            <div class="process_btn">
+              R U N
+            </div>
+          </div>
+          <div class="string_input">
+            <div class="text">
+              <div>Speed (0.1s ... 1.5s) [<span id="speed_val"></span>]</div>
+              <input id="speed" type="range" min="100" max="1500" step="10">
+            </div>
+            <div class="text">
+              <div>Delays (0.1s ... 0.5s) [<span id="delay_val"></span>]<br/></div>
+              <input id="delay" type="range" min="100" max="500" step="10">
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tape">
+        <svg id="tape"></svg>
+      </div>
+      
+      <div class="states">
+        <div class="states_table">
+          <table class="states_table">
+            <tr class="main_row">
+              <td>State</td>
+              <td>Read</td>
+              <td>Write</td>
+              <td>Move to</td>
+              <td>Next state</td>
+            </tr>
+            <tr class="state_row" id="row_S">
+              <td class="state">Start </td>
+              <td class="state_select" colspan="4">
+                <div>
+                  <select name="move_select"                        
+                          id="start_state">
+                  </select>  
+                </div>
+              </td>
+            </tr>
+            <tr class="state_row" id="row_H">
+              <td class="state">HALT </td>
+              <td class="state_select"  colspan="4">
+              <div>
+                  <select name="move_select"                        
+                          id="halt_state">
+                  </select>  
+              </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="states_graf">
+          <svg id="graph"></svg>
+        </div>
+      </div>
+
+      <!-- <svg width="600" height="600" xmlns="http://www.w3.org/2000/svg">
+
+        <path d="M10 10 C 20 20, 40 20, 50 10" stroke="black" fill="transparent"/>
+        <path d="M70 10 C 70 20, 120 20, 120 10" stroke="black" fill="transparent"/>
+        <path d="M130 10 C 120 20, 180 20, 170 10" stroke="black" fill="transparent"/>
+        <path d="M10 60 C 20 80, 40 80, 50 60" stroke="black" fill="transparent"/>
+        <path d="M70 60 C 70 80, 110 80, 110 60" stroke="black" fill="transparent"/>
+        <path d="M130 60 C 120 80, 180 80, 170 60" stroke="black" fill="transparent"/>
+        <path d="M10 110 C 20 140, 40 140, 50 110" stroke="black" fill="transparent"/>
+        <path d="M70 110 C 70 140, 110 140, 110 110" stroke="black" fill="transparent"/>
+        <path d="M130 110 C 120 140, 180 140, 170 110" stroke="black" fill="transparent"/>
+      
+      </svg> -->
+
+    
+
+    
+    
+   <!-- </div> -->
+
+    
+    <script src="js/tape.js"></script>
+    <script src="js/states_table.js"></script>
+    <script src="js/graf.js"></script>
+    <script src="js/index.js"></script>
+
+   
+
+  </body>
+
+</html>
