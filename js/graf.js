@@ -3,7 +3,7 @@
 	this.rx = parseInt(this.attr("rx"));
 	this.ry = parseInt(this.attr("ry"));
 
-	thisState = parseInt((/[0-9]+/g).exec(this[1].attr("text")));
+	thisState = this[1].attr("text");
  }
 
  move = function(dx, dy) {
@@ -24,6 +24,14 @@
 
 const graph = Snap("#graph");
 
+//	circle pointer
+let circlePointer;
+//	for colorizing active states
+let statesActive = {
+	start: "",
+	end: "",
+	error: ""
+};
 
 //	creating arrow marker element
 var arrow = graph.polygon([0, 10, 4, 10, 2, 0])
@@ -64,20 +72,6 @@ function addStateCircle(cx, cy, cText) {
 		ry: 0
 	})
 	.drag(move, start, stop)
-	// .drag(() => {movingState()},
-	// .drag(function(){
-	// 		console.log(draw_states[thisState]);
-	// 		console.log(draw_states[thisState].transform());
-	// 	},
-	// 	function(){
-	// 		//	start moving
-	// 		thisState = parseInt((/[0-9]+/g).exec(cText));
-	// 	},
-	// 	function(){
-	// 		//	stopped moving
-	// 		// console.log("Move stopped");
-	// 	}
-	// )
 };
 
 //---------------------------------------------------------------------
@@ -90,26 +84,18 @@ function changeCoords(stateFrom, stateTo){
 
 	// console.log("--------- changeCoords --------- ");
 	// console.log("---------    start   --------- ");
-	// console.log("stateFrom= " + stateFrom);
-	// console.log("stateTo= " + stateTo);
 
-	var stateFrom = parseInt(stateFrom);
-	var stateTo = parseInt(stateTo);
-
-	let x1 = parseFloat(draw_states[stateFrom][0].attr("cx")) + draw_states[stateFrom].attr("transform").globalMatrix.e;
-	let y1 = parseFloat(draw_states[stateFrom][0].attr("cy")) + draw_states[stateFrom].attr("transform").globalMatrix.f;
-	let x2 = parseFloat(draw_states[stateTo][0].attr("cx")) + draw_states[stateTo].attr("transform").globalMatrix.e;
-	let y2 = parseFloat(draw_states[stateTo][0].attr("cy")) + draw_states[stateTo].attr("transform").globalMatrix.f;
-
-
+	let x1 = parseFloat(states_arr[stateFrom].svgState[0].attr("cx")) + states_arr[stateFrom].svgState.attr("transform").globalMatrix.e;
+	let y1 = parseFloat(states_arr[stateFrom].svgState[0].attr("cy")) + states_arr[stateFrom].svgState.attr("transform").globalMatrix.f;
+	let x2 = parseFloat(states_arr[stateTo].svgState[0].attr("cx")) + states_arr[stateTo].svgState.attr("transform").globalMatrix.e;
+	let y2 = parseFloat(states_arr[stateTo].svgState[0].attr("cy")) + states_arr[stateTo].svgState.attr("transform").globalMatrix.f;
 
 	const b = Math.abs(y2-y1);
 	const c = Math.abs(x2-x1);
 	const a = Math.sqrt( b*b + c*c );
 	const sinAlfa =  a / b;
 	const cosAlfa =  a / c;
-	const R = Math.round(parseFloat(draw_states[stateFrom][0].attr("r")),2);
-	
+	const R = Math.round(parseFloat(states_arr[stateFrom].svgState[0].attr("r")),2);
 
 	const moveX = (y2 == y1) ? R+3 : (R+3) / cosAlfa ;
 	const moveY = (x2 == x1) ? R+3 : (R+3) / sinAlfa ;
@@ -165,24 +151,8 @@ function connetcStates(sFrom, sTo, text){
 	// console.log("--------- connetcStates --------- ");
 	// console.log("---------    start   --------- ");
 
-	const start = (/[0-9]+/g).exec(sFrom);
-	const end = (/[0-9]+/g).exec(sTo);
-	
-	// console.log("start = " + start);
-	// console.log("end = " + end);
+	const coords = changeCoords(sFrom, sTo);
 
-	const coords = changeCoords(parseInt(start), parseInt(end));
-	// console.log("coords = ");
-	// console.log(coords);
-	// console.log(coords.x1);
-	
-
-	// var fsz = 20;
-
-
-
-	// console.log(draw_states[parseInt(end)][0].attr());
-	// console.log("connection: "+ "M "+coords.x1+" "+coords.y2+" L "+coords.x2+" "+coords.y2);
 
 	connectors.push(graph.group(
 			graph.path("M "+coords.x1+" "+coords.y1+" L "+coords.x2+" "+coords.y2)
@@ -190,8 +160,8 @@ function connetcStates(sFrom, sTo, text){
 					stroke: '#000',
 					strokeWidth: 2,
 					fill: 'none',
-					stateFrom: start,
-					stateTo: end,
+					stateFrom: sFrom,
+					stateTo: sTo,
 					markerEnd: marker
 				}),
 			// graph.group(
@@ -208,45 +178,37 @@ function connetcStates(sFrom, sTo, text){
 			)
 	);
 
-	// console.log(connectors);
-	// console.log(connectors[connectors.length-1][1].attr());
-
 	let links = "";
 	
-	// console.log(draw_states[parseInt(start)].attr());
-	if(draw_states[parseInt(start)].attr("links") !== "-"){
-		if(draw_states[parseInt(start)].attr("links").length != 1){
-			let buf = draw_states[parseInt(start)].attr("links").split("_");
+	if(states_arr[sFrom].svgState.attr("links") !== "-"){
+		if(states_arr[sFrom].svgState.attr("links").length != 1){
+			let buf = states_arr[sFrom].svgState.attr("links").split("_");
 			buf.push("1:"+(connectors.length-1));
 			links = buf.join("_");
 		}
 		else{
-			links = draw_states[parseInt(start)].attr("links")+"_1:"+(connectors.length-1);
-			// console.log("links = " + links);
-			// console.log(connectors.length-1);
+			links = states_arr[sFrom].svgState.attr("links")+"_1:"+(connectors.length-1);
 		}
 	}else{
 		links = "1:"+(connectors.length-1);
 	}
-	draw_states[parseInt(start)].attr({ links: links });
+	states_arr[sFrom].svgState.attr({ links: links });
 
 	
-	if(draw_states[parseInt(end)].attr("links") !== "-"){
-		if(draw_states[parseInt(end)].attr("links").length != 1){
-			let buf = draw_states[parseInt(end)].attr("links").split("_");
+	if(states_arr[sTo].svgState.attr("links") !== "-"){
+		if(states_arr[sTo].svgState.attr("links").length != 1){
+			let buf = states_arr[sTo].svgState.attr("links").split("_");
 			buf.push("0:"+(connectors.length-1));
 			links = buf.join("_");
 		}
 		else{
-			links = draw_states[parseInt(end)].attr("links")+"_0:"+(connectors.length-1);
+			links = states_arr[sTo].svgState.attr("links")+"_0:"+(connectors.length-1);
 		}
 	}else{
 		links = "0:"+(connectors.length-1);
 	}
-	draw_states[parseInt(end)].attr({ links: links });
+	states_arr[sTo].svgState.attr({ links: links });
 
-	// console.log(draw_states[parseInt(start)].attr());
-	// console.log(draw_states[parseInt(end)].attr());
 
 	// console.log("---------      end     --------- ");
 	// console.log("--------- connetcStates --------- ");
@@ -264,14 +226,7 @@ function moveline(lineNr, stateFrom, stateTo){
 	// console.log("--------- moveline --------- ");
 	// console.log("---------    start   --------- ");
 	
-	// console.log("stateFrom:" + stateFrom);
-	// console.log("stateTo:" + stateTo);
-	
-	
 	const coords = changeCoords(stateFrom, stateTo);
-
-	// console.log("---------      end     --------- ");
-	// console.log("--------- moveline --------- ");
 
 	connectors[lineNr][0].attr({
 		path: "M " + coords.x1 + " " + coords.y1 + " L " + coords.x2 + " " + coords.y2
@@ -283,9 +238,10 @@ function moveline(lineNr, stateFrom, stateTo){
 	connectors[lineNr][2].attr({
 		x : "" + ((coords.x1 + coords.x2)/2-30),
 		y : "" + ((coords.y1 + coords.y2)/2+7)
-	});	
+	});
 
-	// return "M " + coords.x1 + " " + coords.y1 + " L " + coords.x2 + " " + coords.y2;
+	// console.log("---------      end     --------- ");
+	// console.log("--------- moveline --------- ");	
 };
 
 
@@ -298,38 +254,21 @@ function movingState(){
 	// console.log("--------- movingState --------- ");
 	// console.log("---------    start   --------- ");
 
-	let allLinks = draw_states[thisState].attr("links").split("_");
+	let allLinks = states_arr[thisState].svgState.attr("links").split("_");
 	const linksQnt = allLinks.length;
-
-	// console.log(draw_states[thisState]);
-	// console.log(draw_states[thisState].transform());
-
-	// console.log("allLinks");
-	// console.log(allLinks);
 
 	for(let i=0; i<linksQnt; i++){
 
-		const changeFrom = parseInt(connectors[allLinks[i].split(":")[1]][0].attr("stateFrom"));
-		const changeTo = parseInt(connectors[allLinks[i].split(":")[1]][0].attr("stateTo"));
-
-		// console.log("changeFrom = " + changeFrom);
-		// console.log("changeTo = " + changeTo);
-		// console.log("before");
-		// console.log(connectors[allLinks[i].split(":")[1]][0].attr());
-
-
+		const changeFrom = connectors[allLinks[i].split(":")[1]][0].attr("stateFrom");
+		const changeTo = connectors[allLinks[i].split(":")[1]][0].attr("stateTo");
 
 		moveline(allLinks[i].split(":")[1], changeFrom, changeTo)
-
-		// connectors[allLinks[i].split(":")[1]][0].attr({
-		// 	path: moveline(allLinks[i].split(":")[1], changeFrom, changeTo)
-		// });
-
-		// console.log("after:");		
-		// console.log(connectors[allLinks[i].split(":")[1]][0].attr());
-	
 	}
 
 	// console.log("---------      end     --------- ");
 	// console.log("--------- movingState --------- ");
 };
+
+
+
+

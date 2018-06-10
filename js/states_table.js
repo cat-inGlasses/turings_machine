@@ -38,7 +38,3 @@ function addNewRow(stateName, read, write, moveTo, nextState, rowNum, startState
 	const hS = (haltState == "auto") ? statesNames[statesNames.length-1] : haltState;
 	$("#halt_state").val(hS);
 };
-
-function addNewCircleState(stateName, initCoords){
-	draw_states.push(addStateCircle(initCoords.x, initCoords.y, stateName));	
-};

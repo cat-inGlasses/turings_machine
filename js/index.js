@@ -34,8 +34,8 @@
 	let speed = 500;
 	$( "#speed" ).val(speed);
 	$("#speed_val").text(speed/1000);
-	$( "#speed" ).change(function() {
-		speed = parseInt($( "#speed" ).val());
+	$("#speed").on("input", function(e) {
+		speed = parseInt($( e.target ).val());
 		$("#speed_val").text(speed/1000);
 	});
 
@@ -43,30 +43,44 @@
 	let delay = 300;
 	$( "#delay" ).val(delay);
 	$("#delay_val").text(delay/1000);
-	$( "#delay" ).change(function() {
-		delay = parseInt($( "#delay" ).val());
+	$("#delay").on("input", function(e) {
+		delay = parseInt($( e.target ).val());
 		$("#delay_val").text(delay/1000);
 	});
+
+let lastChangeCoord = "x"
+function processCoords(){
 	
+	xShift = 70;
+	yShift = 100;
 
-// draw_states.push(addStateCircle(200, 100, 'q0'));
-// draw_states.push(addStateCircle(270, 200, 'qH'));
-// draw_states.push(addStateCircle(340, 300, 'q2'));
-// draw_states.push(addStateCircle(440, 300, 'q3'));
-// draw_states.push(addStateCircle(240, 350, 'q4'));
+	switch(lastChangeCoord){
+		case "x":
+			initCoords.y += yShift;
+			initCoords.x += xShift;
+			lastChangeCoord = "y";
+		break;
 
-// draw_states.push(addStateCircle(640, 400, 'q3'));
-// draw_states.push(addStateCircle(140, 500, 'q4'));
-// statesQnt = 3;
+		case "y":
+			initCoords.y -= yShift;
+			initCoords.x += xShift;
+			lastChangeCoord = "x";
+		break;
+	}
 
+	if( (parseInt($("#graph").width())-40) < (initCoords.x)){
+		initCoords.x = 40;
+		if(lastChangeCoord == "x")
+			initCoords.y += 2*yShift;
+		else
+			initCoords.y += yShift;
+	}
 
-// connetcStates('q0', 'q1');
-// connetcStates('q1', 'q2');
-// connetcStates('q2', 'q3');
-// connetcStates('q1', 'q4');
-// connetcStates('q4', 'q3');
+	if(parseInt($("#graph").height()-40) < (initCoords.y)){
+		$("#graph").height(initCoords.y + 40);
+	}
 
-
+}
 
 $(".add_btn").click(() => { 
 
@@ -121,12 +135,8 @@ $(".add_btn").click(() => {
 			states_arr[stateName]["halt"] = false;
 
 			//	draw new State circle, if there is no such
-				addNewCircleState(stateName, initCoords);
-				initCoords.x += 150;	
-				if(parseInt($("#graph").width()) < (initCoords.x-40)){
-					initCoords.x = 40;
-					initCoords.y += 100;
-				}	
+				states_arr[stateName]["svgState"] = addStateCircle(initCoords.x, initCoords.y, stateName);
+				processCoords();
 		}else if(states_arr[stateName]["read"] == read){	//	error - the same read value
 			$("#v_state_name").val("");
 			$("#v_read").val("");
@@ -141,23 +151,15 @@ $(".add_btn").click(() => {
 			states_arr[stateName]["halt"] = false;
 		}
 
-	console.log(states_arr);
-
 	//	draw new State circle, if there is no such
 		if(states_arr[nextState] == undefined){
 			states_arr[nextState] = [];
 		
-			addNewCircleState(nextState, initCoords);
-			initCoords.x += 150;
-			if((parseInt($("#graph").width())-40) < (initCoords.x)){
-				initCoords.x = 40;
-				initCoords.y += 100;
-			}	
+			states_arr[nextState]["svgState"] = addStateCircle(initCoords.x, initCoords.y, nextState);
+			processCoords();
 		}
 		const text = "" + read + "/" + write + " , " + moveTo;
-		connetcStates(stateName, nextState, text);
-
-						
+		connetcStates(stateName, nextState, text);			
 
 	//	reset all states input fields
 		$("#v_state_name").val("");
@@ -179,12 +181,17 @@ function processing(enState){
 
 $(".process_btn").click(()=>{
 
-	if(inProcess)
-		return;
+	//	if machine is in process now  OR
+	//	if there are no rows in table (states in array) 
+	//	--> return
+		if(inProcess || rowNum == 0){
+			$("#v_state_name").focus();
+			return;
+		}
 
 	//	if there is empty field AND
-	//	if process sttring is the dsame as in placeholder
-	//	 --> STOP
+	//	if process sttring is the same as in placeholder
+	//	--> STOP
 		if($("#process_string").val().trim() == "" &&  processedString != $("#process_string").attr("placeholder")){
 			$("#process_string").focus();
 			return;
@@ -208,6 +215,23 @@ $(".process_btn").click(()=>{
 			states_arr[haltState] = [];
 			states_arr[haltState]['halt'] = true;
 		}
+
+	//	colorize on graph
+		if(statesActive.start != "")
+			states_arr[statesActive.start].svgState[0].attr({fill: 'black'});
+		
+		if(statesActive.end != "")
+			states_arr[statesActive.end].svgState[0].attr({fill: 'black'});
+
+		if(statesActive.error != "")
+			states_arr[statesActive.error].svgState[0].attr({fill: 'black'});
+			
+		statesActive.start = startState;
+		statesActive.end =  haltState;
+		statesActive.error =  "";
+		states_arr[statesActive.start].svgState[0].attr({fill: '#ffcc00'});
+		states_arr[statesActive.end].svgState[0].attr({fill: '#ff9933'});
+
 	
 	//	set processing string
 		if( processedString != $("#process_string").attr("placeholder") || 
@@ -223,73 +247,6 @@ $(".process_btn").click(()=>{
 
 	//	fill the tape with processing string
 		fillTape(processedString, startState);
-	
-	//	UNblock inputs
-		// inputs(false);
-
-		// console.log('$(".add_new_state input").attr("disabled") = ' + $(".add_new_state input").attr("disabled"));
-
-
-	
-	// let string = [];
-	// for(let  i = 0; i < string1.length; i++){
-	// 	string.push(string1[i]);
-	// }
-
-	// console.log(string);
-	// console.log(string.length);
-	// console.log(string[0]);
-	// // string[0] = "f";
-	// console.log(string[0]);
-	// console.log(statesQnt);
-	// states_arr.length
-
-	// let new_state = "q0";
-	// let halt = false;
-	// let index = 0;
-	// do{
-
-		
-		
-	
-	// 	console.log("Read value: " + string[index]);
-	// 	string[index] = states_arr[new_state]["write"];
-	// 	console.log("Write state: " + string[index]);
-	// 	console.log("Move To: " + states_arr[new_state]["moveTo"]);
-	// 	new_state = states_arr[new_state]["nextState"];
-	// 	console.log("Change state to: " + new_state);
-	// 	// string[index] = states_arr[new_state]["write"]
-	// 	console.log("result string value: " + string.join(""));
-	// 	console.log("-------------------------------------");
-	
-	// 	switch(states_arr[new_state]["moveTo"]){
-	// 		case "L":
-	// 			index--;
-	// 		break;
-
-	// 		case "R":
-	// 			index++;
-	// 		break;
-	// 	}
-
-	// 	if(index < 0){
-	// 		halt = true;
-	// 	}
-
-	// 	if(index > string.length){
-	// 		halt = true;
-	// 	}
-
-	// // console.log("indexes");
-	// // console.log("statesNames["+index+"] = " + statesNames[index]);
-	// // console.log("statesNames["+(statesQnt-1)+"] = " + statesNames[statesQnt-1]);
-		
-	// 	if(states_arr[new_state]["halt"] == 1){
-	// 		halt = true;
-	// 	}
-	
-	// }while(!halt);
-
 });
 
 $(".string_input").width($(".add_new_state").width())

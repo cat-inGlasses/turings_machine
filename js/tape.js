@@ -60,7 +60,7 @@ class Head{
 
 	constructHead(x,y,startText){
 
-		const pointer = {
+		let pointer = {
 			x: x,
 			y: y
 		};
@@ -72,6 +72,10 @@ class Head{
 			p2y: pointer.y + arrow_Side/2,
 			p3x: pointer.x,
 			p3y: pointer.y - arrow_Side/2,
+		};
+		pointer = {
+			x: x,
+			y: pointer.y-3
 		};
 		arrow_Side = 20;
 		let tr_blck = {
@@ -89,7 +93,7 @@ class Head{
 									tr_whiete.p2y, 
 									tr_whiete.p3x, 
 									tr_whiete.p3y])
-						.attr({ fill: '#fff' }),
+						.attr({ fill: '#e6e6e6' }),
 					tape.polygon([tr_blck.p1x, 
 									tr_blck.p1y, 
 									tr_blck.p2x, 
@@ -161,7 +165,7 @@ function fillTape(string, startState){
 
 	//	calculate start position for the given string
 	const tapeLength = $("#tape").width();
-	const start = tapeLength/2 - rect.w*string.length/2;
+	let start = tapeLength/2 - rect.w*string.length/2;
 	if(start <= 0)
 		start = rect.w;
 
@@ -174,10 +178,13 @@ function fillTape(string, startState){
 	}
 	sTapeBlock = start_block;
 
+
+
+
+
 	//	positioning header
 	const px = parseFloat(tape_arr[start_block][0].attr("x")) + rect.w/2;
-	const py = parseFloat(tape_arr[0][0].attr("y")) + rect.h;
-	console.log("py = "+ py)
+	const py = parseFloat(tape_arr[0][0].attr("y")) + rect.h*1.1;
 	
 	head.relx = -(head.x - px);
 	head.rely = -(head.y - py);
@@ -187,8 +194,7 @@ function fillTape(string, startState){
 		speed,
 		"",
 		() => {
-			console.log("head.y = " + head.y);
-			console.log("--startState = " + startState);
+			circlePointer = graph.circle(50, 50, 10).attr({ fill: 'blue', opacity: 0, id:'circlePointer' });
 			setTimeout(moveHead, delay, startState);
 		}
 	);
@@ -205,35 +211,33 @@ function fillTape(string, startState){
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 function moveHead(state){
+	
+	let read = tape_arr[sTapeBlock][1].attr("text");
 
 	//	return if it is halt state
 	if(states_arr[state]["halt"]){
 		processing(false);
-		head.success();
+		$("#circlePointer").remove();
+		if(read == ""){
+			head.success();
+			states_arr[statesActive.end].svgState[0].attr({fill: '#009900'});
+		}else{
+			processing(false);
+			head.error();
+			statesActive.error = state;
+			states_arr[statesActive.error].svgState[0].attr({fill: '#cc2900'});
+		}
 		return;
 	}
 
 	//	return if there if bad value or null
-	let read = tape_arr[sTapeBlock][1].attr("text");
 	if(read == "" || states_arr[state][read] == undefined){
 		processing(false);
 		head.error();
+		$("#circlePointer").remove();
+		statesActive.error = state;
+		states_arr[statesActive.error].svgState[0].attr({fill: '#cc2900'});
 		return;
 	}
 
@@ -247,8 +251,6 @@ function moveHead(state){
 
 	//	setting new coords
 	let transform = "";
-	// head.rely = 0;
-	console.log("head.rely = " + head.rely);
 	switch(states_arr[state][read]["moveTo"]){
 		case "L":
 			transform = "t" + (parseFloat(head.pointer.transform().globalMatrix.e) - (spBtw + rect.w) + "," + head.rely);
@@ -260,7 +262,25 @@ function moveHead(state){
 			sTapeBlock++;
 			break;
 	}
-	
+
+	//	
+	let allLinks = states_arr[state].svgState.attr("links").split("_");
+	const linksQnt = allLinks.length;
+	let index = 0;
+	if(linksQnt == 1){
+		index = allLinks[0].split(":")[1];
+	}else{
+		for(let i=0; i<linksQnt; i++){
+			if( connectors[allLinks[i].split(":")[1]][0].attr("stateFrom") == state &&
+			    connectors[allLinks[i].split(":")[1]][0].attr("stateTo") == states_arr[state][read]["nextState"])
+				index = allLinks[i].split(":")[1];
+		}
+	}
+
+	//	move circlePointer
+	circlePointer
+		.attr({ opacity: 1 })
+		.drawAtPath(connectors[index][0], speed);
 	//	move head to next block
 	head.pointer.animate(
 		{transform}, 	//	transforms
